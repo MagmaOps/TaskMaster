@@ -1,0 +1,8 @@
+{
+  "migrationsTable": "pgmigrations",
+  "dir": "src/database/migrations",
+  "direction": "up",
+  "count": "Infinity",
+  "migrationFileLanguage": "ts",
+  "envPath": ".env"
+}

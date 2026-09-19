@@ -1,0 +1,43 @@
+# Local development database for TaskMaster.
+# Mirrors the in-cluster Postgres so local dev matches production behavior.
+# Usage: docker compose up -d
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: taskmaster-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: taskmaster_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - taskmaster_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d taskmaster_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Separate database instance for the automated test suite.
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: taskmaster-postgres-test
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: taskmaster_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: test_password
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data  # ephemeral: tests start from a clean slate
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d taskmaster_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  taskmaster_pgdata:

@@ -1,0 +1,134 @@
+# ==============================================================================
+# TaskMaster monorepo .gitignore
+# Covers: Node.js, TypeScript, Vite/React, Express, Docker, k8s, editors, OS
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Dependencies
+# ------------------------------------------------------------------------------
+node_modules/
+**/node_modules/
+.pnp/
+.pnp.js
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+jspm_packages/
+
+# ------------------------------------------------------------------------------
+# Environment variables & secrets (NEVER commit real values)
+# ------------------------------------------------------------------------------
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+# Keep example templates tracked:
+!.env.example
+!**/.env.example
+
+# Decrypted / plaintext secrets (SealedSecrets are safe to commit; these are not)
+*.dec.yaml
+*.dec.yml
+secrets.plain.*
+*.key
+*.pem
+*.p12
+*.pfx
+
+# ------------------------------------------------------------------------------
+# Build output
+# ------------------------------------------------------------------------------
+# Frontend (Vite)
+dist/
+dist-ssr/
+**/dist/
+build/
+**/build/
+.vite/
+*.local
+
+# Backend (TypeScript compile output)
+task-master-server/dist/
+task-master-server/build/
+*.tsbuildinfo
+
+# ------------------------------------------------------------------------------
+# Testing & coverage
+# ------------------------------------------------------------------------------
+coverage/
+**/coverage/
+.nyc_output/
+*.lcov
+test-results/
+playwright-report/
+
+# ------------------------------------------------------------------------------
+# Logs
+# ------------------------------------------------------------------------------
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+# Project-specific stray log from old build
+task-master-server/src/database/migration.log
+
+# ------------------------------------------------------------------------------
+# Caches
+# ------------------------------------------------------------------------------
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+.npm/
+.turbo/
+
+# ------------------------------------------------------------------------------
+# Docker / local data volumes
+# ------------------------------------------------------------------------------
+# Local Postgres/Redis data if bind-mounted during dev
+docker/data/
+*.pid
+*.seed
+
+# ------------------------------------------------------------------------------
+# Kubernetes / GitOps
+# ------------------------------------------------------------------------------
+# Never commit kubeconfigs or decrypted secret manifests.
+# SealedSecrets (*-sealed.yaml) ARE safe and SHOULD be committed.
+kubeconfig
+*.kubeconfig
+kubeconfig.yaml
+# Helm chart dependency downloads
+k8s/**/charts/
+k8s/**/*.tgz
+
+# ------------------------------------------------------------------------------
+# Editors / IDE
+# ------------------------------------------------------------------------------
+# Keep shared .vscode settings, ignore user-specific state
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+
+# ------------------------------------------------------------------------------
+# OS junk
+# ------------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
