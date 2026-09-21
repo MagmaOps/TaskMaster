@@ -1,0 +1,296 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1. Add `fast-check` as a test-only dependency": [
+      {
+        "executionId": "13472977-3c6c-4a96-aab7-7455704589be",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789917567412
+      },
+      {
+        "executionId": "13472977-3c6c-4a96-aab7-7455704589be",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789917577381
+      },
+      {
+        "executionId": "13472977-3c6c-4a96-aab7-7455704589be",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789917677259
+      }
+    ],
+    "2. Extend the settings type and read-time coalescing in `src/types/index.ts`": [
+      {
+        "executionId": "13472977-3c6c-4a96-aab7-7455704589be",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789917568050
+      },
+      {
+        "executionId": "13472977-3c6c-4a96-aab7-7455704589be",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789917688352
+      },
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789918106197
+      }
+    ],
+    "3. Create the pure `Timezone_Service` utility `src/services/time/userTime.ts`": [
+      {
+        "executionId": "13472977-3c6c-4a96-aab7-7455704589be",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789917568271
+      },
+      {
+        "executionId": "13472977-3c6c-4a96-aab7-7455704589be",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789917578055
+      },
+      {
+        "executionId": "13472977-3c6c-4a96-aab7-7455704589be",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789917678618
+      }
+    ],
+    "5. Extend `userRepository` for timezone persistence — `src/repositories/userRepository.ts`": [
+      {
+        "executionId": "13472977-3c6c-4a96-aab7-7455704589be",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789917568437
+      },
+      {
+        "executionId": "13472977-3c6c-4a96-aab7-7455704589be",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789917689255
+      },
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789918107218
+      }
+    ],
+    "6. Extend `authService` for timezone write paths — `src/services/auth/authService.ts`": [
+      {
+        "executionId": "13472977-3c6c-4a96-aab7-7455704589be",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789917568569
+      },
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789918124404
+      },
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789918315991
+      }
+    ],
+    "7. Extend `authController` to thread timezone — `src/controllers/authController.ts`": [
+      {
+        "executionId": "13472977-3c6c-4a96-aab7-7455704589be",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789917568698
+      },
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789918336463
+      },
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789919465778
+      }
+    ],
+    "8. Wire the auth routes — `src/routes/authRoutes.ts`": [
+      {
+        "executionId": "13472977-3c6c-4a96-aab7-7455704589be",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789917568811
+      },
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789919471588
+      },
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789919546755
+      }
+    ],
+    "9. Checkpoint — write path green": [
+      {
+        "executionId": "13472977-3c6c-4a96-aab7-7455704589be",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789917569007
+      },
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789919547829
+      }
+    ],
+    "11. Rezone the weight calendar-day comparison — `src/services/tasks/weight.ts`": [
+      {
+        "executionId": "13472977-3c6c-4a96-aab7-7455704589be",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789917569129
+      },
+      {
+        "executionId": "13472977-3c6c-4a96-aab7-7455704589be",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789917690434
+      },
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789918108464
+      }
+    ],
+    "13. Thread timezone through `taskService` — `src/services/tasks/taskService.ts`": [
+      {
+        "executionId": "13472977-3c6c-4a96-aab7-7455704589be",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789917569243
+      },
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789918337043
+      },
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789919464717
+      }
+    ],
+    "16. Final verification": [
+      {
+        "executionId": "13472977-3c6c-4a96-aab7-7455704589be",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789917569364
+      },
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789919674541
+      },
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789920590085
+      }
+    ],
+    "4.1 Write property tests for `userTime` in `src/services/time/userTime.test.ts` (fast-check, ≥ 100 runs each)": [
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789918113231
+      }
+    ],
+    "4. Test the `userTime` utility": [
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789918113405
+      }
+    ],
+    "4.2 Write example/edge-case unit tests for `userTime`": [
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789918114231
+      }
+    ],
+    "12.1 Add weight property tests (fast-check, ≥ 100 runs each)": [
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789918125828
+      },
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789918316804
+      }
+    ],
+    "12.2 Add a Tokyo-vs-UTC example test and confirm existing suite unchanged": [
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789918126695
+      },
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789918317933
+      }
+    ],
+    "12. Weight tests for timezone behavior — `src/services/tasks/weight.test.ts` (additions)": [
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789918317002
+      }
+    ],
+    "15.1 Add the settings-merge property test (fast-check, ≥ 100 runs) in `src/services/time/userTime.test.ts` or `src/services/auth/authService.test.ts`": [
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789918338277
+      },
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789919466944
+      }
+    ],
+    "15. Settings-merge property test": [
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789919467332
+      }
+    ],
+    "10.1 Add timezone endpoint integration tests": [
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789919549058
+      },
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789919673001
+      }
+    ],
+    "14.1 Add defer + weight-context service tests": [
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789919549884
+      },
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789919673781
+      }
+    ],
+    "10. Endpoint integration tests — `src/routes/authRoutes.test.ts` (Supertest, following existing conventions)": [
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789919673248
+      }
+    ],
+    "14. Defer/weight service tests for timezone — `src/services/tasks/`": [
+      {
+        "executionId": "7a210a47-a8cd-4dd1-85da-e3884b058d7b",
+        "chatSessionId": "sess_4a6ee63c-309d-4ae7-bfa1-24bddbcb9d19",
+        "timestamp": 1789919674178
+      }
+    ]
+  }
+}

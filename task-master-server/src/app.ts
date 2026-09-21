@@ -9,6 +9,7 @@ import authRoutes from './routes/authRoutes';
 import taskRoutes from './routes/taskRoutes';
 import projectRoutes from './routes/projectRoutes';
 import economyRoutes from './routes/economyRoutes';
+import streaksRoutes from './routes/streaksRoutes';
 import { registerAllListeners } from './services/completion/registerListeners';
 
 /** Builds the Express application with middleware and routes wired up. */
@@ -45,6 +46,7 @@ export function createApp(): Application {
   app.use('/api/tasks', taskRoutes);
   app.use('/api/projects', projectRoutes);
   app.use('/api/economy', economyRoutes);
+  app.use('/api/streaks', streaksRoutes);
 
   // 404 + centralized error handling (must be last).
   app.use(notFoundHandler);

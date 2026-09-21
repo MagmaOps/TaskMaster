@@ -2,6 +2,7 @@ import request from 'supertest';
 import type { Application } from 'express';
 import { createApp } from '../app';
 import { pool } from '../database/pool';
+import { localCalendarDate, nextCalendarDate } from '../services/time/userTime';
 
 /** Integration tests for task management against the ephemeral test DB. */
 let app: Application;
@@ -170,5 +171,122 @@ describe('task management', () => {
     const list = await request(app).get('/api/tasks').set(auth(token));
     expect(list.body.data[0].weightBreakdown).toBeDefined();
     expect(list.body.data[0].weightBreakdown.base).toBeGreaterThan(0);
+  });
+});
+
+describe('task management — timezone', () => {
+  /** Set a user's stored timezone directly in the DB after registration. */
+  async function setTimezone(email: string, tz: string): Promise<void> {
+    await pool.query(
+      `UPDATE users SET settings = jsonb_set(settings, '{timezone}', $2::jsonb) WHERE email = $1`,
+      [email, JSON.stringify(tz)],
+    );
+  }
+
+  async function createTask(token: string, subject: string, priority = 'medium') {
+    return request(app).post('/api/tasks').set(auth(token)).send({ subject, priority });
+  }
+
+  it('later_today sets dueDate to the user local calendar date in a non-UTC zone (Kiritimati, UTC+14)', async () => {
+    // Req 6.1: later_today uses the user's local calendar day, resolved from
+    // settings.timezone. Kiritimati (UTC+14) is a strong divergence case.
+    const email = 'tz-later-kiritimati@example.com';
+    const token = await registerUser(email);
+    await setTimezone(email, 'Pacific/Kiritimati');
+
+    const created = await createTask(token, 'defer later today');
+    const id = created.body.data.id as string;
+
+    const res = await request(app)
+      .put(`/api/tasks/${id}/defer`)
+      .set(auth(token))
+      .send({ option: 'later_today' });
+
+    expect(res.status).toBe(200);
+    // Recompute the expected local date in the same zone at (near) the same
+    // instant; defer is deterministic w.r.t. the calendar date it produces.
+    const expected = localCalendarDate('Pacific/Kiritimati');
+    expect(res.body.data.dueDate).toBe(expected);
+    // Sanity: this is the zone's local "today", not the server-local day.
+    expect(res.body.data.dueDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('tomorrow sets dueDate to nextCalendarDate(local today) in a non-UTC zone and increments deferralCount', async () => {
+    // Req 6.2: tomorrow = the calendar day after the user's local today.
+    const email = 'tz-tomorrow-kiritimati@example.com';
+    const token = await registerUser(email);
+    await setTimezone(email, 'Pacific/Kiritimati');
+
+    const created = await createTask(token, 'defer tomorrow');
+    const id = created.body.data.id as string;
+
+    const res = await request(app)
+      .put(`/api/tasks/${id}/defer`)
+      .set(auth(token))
+      .send({ option: 'tomorrow' });
+
+    expect(res.status).toBe(200);
+    const expected = nextCalendarDate(localCalendarDate('Pacific/Kiritimati'));
+    expect(res.body.data.dueDate).toBe(expected);
+    expect(res.body.data.deferralCount).toBe(1);
+  });
+
+  it('sometime_later downgrades priority one level and clears due date regardless of timezone', async () => {
+    // Req 6.3: sometime_later is timezone-independent.
+    const email = 'tz-sometime-kiritimati@example.com';
+    const token = await registerUser(email);
+    await setTimezone(email, 'Pacific/Kiritimati');
+
+    const created = await request(app)
+      .post('/api/tasks')
+      .set(auth(token))
+      .send({ subject: 'someday tz', priority: 'high', dueDate: '2026-12-01' });
+    const id = created.body.data.id as string;
+
+    const res = await request(app)
+      .put(`/api/tasks/${id}/defer`)
+      .set(auth(token))
+      .send({ option: 'sometime_later' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.priority).toBe('medium');
+    expect(res.body.data.dueDate).toBeNull();
+  });
+
+  it('unset timezone defaults to UTC: later_today equals localCalendarDate(UTC) (UTC fallback equivalence)', async () => {
+    // Req 7.2 / 6.4: a freshly-registered user has timezone defaulting to
+    // 'UTC', so the local calendar day equals the UTC calendar day.
+    const email = 'tz-default-utc@example.com';
+    const token = await registerUser(email);
+
+    const created = await createTask(token, 'defer utc default');
+    const id = created.body.data.id as string;
+
+    const res = await request(app)
+      .put(`/api/tasks/${id}/defer`)
+      .set(auth(token))
+      .send({ option: 'later_today' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.dueDate).toBe(localCalendarDate('UTC'));
+  });
+
+  it('explicit UTC timezone control: later_today equals localCalendarDate(UTC)', async () => {
+    // Control alongside the Kiritimati cases: an explicit UTC user resolves the
+    // same calendar day as the server-local day in the UTC test environment.
+    const email = 'tz-explicit-utc@example.com';
+    const token = await registerUser(email);
+    await setTimezone(email, 'UTC');
+
+    const created = await createTask(token, 'defer explicit utc');
+    const id = created.body.data.id as string;
+
+    const res = await request(app)
+      .put(`/api/tasks/${id}/defer`)
+      .set(auth(token))
+      .send({ option: 'later_today' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.dueDate).toBe(localCalendarDate('UTC'));
   });
 });

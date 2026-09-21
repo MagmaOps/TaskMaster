@@ -21,6 +21,13 @@ export interface CompletionEvent {
   weightAtCompletion: number;
   /** Achievements listener appends here; returned to the client by task-management. */
   unlocked: UnlockedAchievement[];
+  /**
+   * Streak values computed by the streak listener for THIS completion, published
+   * for later listeners (e.g. achievements) to read without re-querying. Set by
+   * the streak listener; requires the streak listener to be registered BEFORE
+   * achievements in registerAllListeners.
+   */
+  streaks?: { daily: number; series?: number };
 }
 
 export type CompletionListener = (event: CompletionEvent) => Promise<void>;

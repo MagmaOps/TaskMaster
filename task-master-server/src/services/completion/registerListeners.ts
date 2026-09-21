@@ -1,5 +1,6 @@
 import { registerCompletionListener } from './completionEvents';
 import * as economyService from '../economy/economyService';
+import * as streakService from '../streaks/streakService';
 
 /**
  * Registers all completion listeners exactly once per process. Called from
@@ -16,4 +17,10 @@ export function registerAllListeners(): void {
   registered = true;
 
   registerCompletionListener(economyService.onTaskCompleted);
+
+  // Streaks must be registered BEFORE achievements: achievements reads
+  // event.streaks (the just-updated streak values) which the streak listener
+  // populates. Economy order relative to streaks does not matter (independent).
+  // When the achievements listener lands, add it AFTER this line.
+  registerCompletionListener(streakService.onTaskCompleted);
 }

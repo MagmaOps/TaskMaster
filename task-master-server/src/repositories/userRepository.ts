@@ -1,5 +1,6 @@
 import { query, withTransaction } from '../database/pool';
-import { DEFAULT_USER_SETTINGS, type OAuthAccountRow, type UserRow } from '../types';
+import { DEFAULT_USER_SETTINGS, type OAuthAccountRow, type UserRow, type UserSettings } from '../types';
+import { DEFAULT_TIMEZONE } from '../services/time/userTime';
 
 /** Data access for users and their linked OAuth accounts. */
 
@@ -17,6 +18,7 @@ export async function createPasswordUser(params: {
   email: string;
   passwordHash: string;
   displayName?: string | null;
+  timezone?: string;
 }): Promise<UserRow> {
   const res = await query<UserRow>(
     `INSERT INTO users (email, password_hash, display_name, settings)
@@ -26,8 +28,17 @@ export async function createPasswordUser(params: {
       params.email.toLowerCase(),
       params.passwordHash,
       params.displayName ?? null,
-      JSON.stringify(DEFAULT_USER_SETTINGS),
+      JSON.stringify({ ...DEFAULT_USER_SETTINGS, timezone: params.timezone ?? DEFAULT_TIMEZONE }),
     ],
+  );
+  return res.rows[0];
+}
+
+/** Overwrites a user's settings JSONB document and bumps updated_at. */
+export async function updateSettings(userId: string, settings: UserSettings): Promise<UserRow> {
+  const res = await query<UserRow>(
+    `UPDATE users SET settings = $2, updated_at = now() WHERE id = $1 RETURNING *`,
+    [userId, JSON.stringify(settings)],
   );
   return res.rows[0];
 }
@@ -67,6 +78,7 @@ export async function createOAuthUser(params: {
   avatarUrl: string | null;
   provider: 'google';
   providerUserId: string;
+  timezone?: string;
 }): Promise<UserRow> {
   return withTransaction(async (client) => {
     // A synthetic unique email is generated for accounts where Google withheld one.
@@ -76,7 +88,12 @@ export async function createOAuthUser(params: {
       `INSERT INTO users (email, password_hash, display_name, avatar_url, settings)
        VALUES ($1, NULL, $2, $3, $4)
        RETURNING *`,
-      [email, params.displayName, params.avatarUrl, JSON.stringify(DEFAULT_USER_SETTINGS)],
+      [
+        email,
+        params.displayName,
+        params.avatarUrl,
+        JSON.stringify({ ...DEFAULT_USER_SETTINGS, timezone: params.timezone ?? DEFAULT_TIMEZONE }),
+      ],
     );
     const user = userRes.rows[0];
     await client.query(

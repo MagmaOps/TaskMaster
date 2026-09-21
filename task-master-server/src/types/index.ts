@@ -1,5 +1,7 @@
 /** Shared domain types used across the backend. */
 
+import { resolveTimezone } from '../services/time/userTime';
+
 export type UserTier = 'free' | 'premium';
 
 export interface UserSettings {
@@ -8,6 +10,7 @@ export interface UserSettings {
   focus_mode_enabled: boolean;
   weight_visibility_enabled: boolean;
   theme: 'system' | 'light' | 'dark';
+  timezone: string; // IANA identifier; 'UTC' by default
 }
 
 export const DEFAULT_USER_SETTINGS: UserSettings = {
@@ -16,6 +19,7 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   focus_mode_enabled: false,
   weight_visibility_enabled: false,
   theme: 'system',
+  timezone: 'UTC',
 };
 
 /** A user row as stored in the database. */
@@ -51,7 +55,7 @@ export function toPublicUser(row: UserRow): PublicUser {
     avatarUrl: row.avatar_url,
     tier: row.tier,
     currencyBalance: Number(row.currency_balance),
-    settings: row.settings,
+    settings: { ...row.settings, timezone: resolveTimezone(row.settings.timezone) },
   };
 }
 

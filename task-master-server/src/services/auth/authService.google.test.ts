@@ -31,6 +31,7 @@ function fakeUser(overrides: Partial<UserRow> = {}): UserRow {
       focus_mode_enabled: false,
       weight_visibility_enabled: false,
       theme: 'system',
+      timezone: 'UTC',
     },
     created_at: new Date(),
     updated_at: new Date(),

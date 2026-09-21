@@ -10,6 +10,7 @@ import {
 } from './tokenService';
 import { hashPassword, validatePasswordStrength, verifyPassword } from './passwordService';
 import { verifyGoogleIdToken } from './googleVerifier';
+import { resolveTimezone } from '../../services/time/userTime';
 
 /** Orchestrates registration, login, Google sign-in, and session refresh. */
 
@@ -38,6 +39,7 @@ export async function register(params: {
   password: string;
   displayName?: string | null;
   userAgent?: string | null;
+  timezone?: unknown;
 }): Promise<AuthResult> {
   const weakness = validatePasswordStrength(params.password);
   if (weakness) {
@@ -54,6 +56,7 @@ export async function register(params: {
     email: params.email,
     passwordHash,
     displayName: params.displayName ?? null,
+    timezone: resolveTimezone(params.timezone),
   });
   return issueTokens(user, params.userAgent);
 }
@@ -78,6 +81,7 @@ export async function login(params: {
 export async function loginWithGoogle(params: {
   idToken: string;
   userAgent?: string | null;
+  timezone?: unknown;
 }): Promise<AuthResult> {
   const profile = await verifyGoogleIdToken(params.idToken);
 
@@ -112,6 +116,7 @@ export async function loginWithGoogle(params: {
     avatarUrl: profile.picture,
     provider: 'google',
     providerUserId: profile.sub,
+    timezone: resolveTimezone(params.timezone),
   });
   return { ...(await issueTokens(created, params.userAgent)), isNewUser: true };
 }
@@ -145,4 +150,20 @@ export async function getProfile(userId: string): Promise<PublicUser> {
     throw ApiError.notFound('User not found');
   }
   return toPublicUser(user);
+}
+
+/**
+ * Persists a user's timezone into their settings JSONB, preserving every other
+ * settings key. `tz` is resolved defensively (invalid → 'UTC') even though the
+ * route validator already rejects invalid values on the explicit-update path.
+ */
+export async function updateTimezone(userId: string, tz: unknown): Promise<PublicUser> {
+  const user = await userRepo.findById(userId);
+  if (!user) {
+    throw ApiError.notFound('User not found');
+  }
+  const timezone = resolveTimezone(tz);
+  const settings = { ...user.settings, timezone };
+  const updated = await userRepo.updateSettings(userId, settings);
+  return toPublicUser(updated);
 }

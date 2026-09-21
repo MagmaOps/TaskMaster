@@ -4,6 +4,7 @@ import { body } from 'express-validator';
 import * as authController from '../controllers/authController';
 import { authMiddleware } from '../middleware/authMiddleware';
 import { validate } from '../middleware/validate';
+import { isValidTimezone } from '../services/time/userTime';
 
 /**
  * Authentication routes. Rate limiting (10/min/IP) guards the credential
@@ -31,6 +32,7 @@ router.post(
     body('email').isEmail().withMessage('A valid email is required').normalizeEmail(),
     body('password').isString().isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
     body('displayName').optional().isString().isLength({ max: 255 }),
+    body('timezone').optional().isString(),
   ]),
   authController.register,
 );
@@ -41,6 +43,7 @@ router.post(
   validate([
     body('email').isEmail().withMessage('A valid email is required').normalizeEmail(),
     body('password').isString().notEmpty().withMessage('Password is required'),
+    body('timezone').optional().isString(),
   ]),
   authController.login,
 );
@@ -48,12 +51,21 @@ router.post(
 router.post(
   '/google',
   authRateLimiter,
-  validate([body('idToken').isString().notEmpty().withMessage('idToken is required')]),
+  validate([
+    body('idToken').isString().notEmpty().withMessage('idToken is required'),
+    body('timezone').optional().isString(),
+  ]),
   authController.google,
 );
 
 router.post('/refresh', authController.refresh);
 router.post('/logout', authController.logout);
 router.get('/me', authMiddleware, authController.me);
+router.patch(
+  '/me',
+  authMiddleware,
+  validate([body('timezone').custom(isValidTimezone).withMessage('Invalid timezone')]),
+  authController.updateTimezone,
+);
 
 export default router;

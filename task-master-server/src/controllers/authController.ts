@@ -34,15 +34,17 @@ function setAuthResponse(res: Response, result: AuthResult, status: number): voi
 
 export async function register(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { email, password, displayName } = req.body as {
+    const { email, password, displayName, timezone } = req.body as {
       email: string;
       password: string;
       displayName?: string;
+      timezone?: string;
     };
     const result = await authService.register({
       email,
       password,
       displayName,
+      timezone,
       userAgent: req.headers['user-agent'],
     });
     setAuthResponse(res, result, 201);
@@ -67,9 +69,10 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
 
 export async function google(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { idToken } = req.body as { idToken: string };
+    const { idToken, timezone } = req.body as { idToken: string; timezone?: string };
     const result = await authService.loginWithGoogle({
       idToken,
+      timezone,
       userAgent: req.headers['user-agent'],
     });
     setAuthResponse(res, result, 200);
@@ -107,6 +110,20 @@ export async function logout(req: Request, res: Response, next: NextFunction): P
 export async function me(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const user = await authService.getProfile(req.userId as string);
+    res.status(200).json({ success: true, data: { user } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updateTimezone(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const { timezone } = req.body as { timezone: string };
+    const user = await authService.updateTimezone(req.userId as string, timezone);
     res.status(200).json({ success: true, data: { user } });
   } catch (err) {
     next(err);

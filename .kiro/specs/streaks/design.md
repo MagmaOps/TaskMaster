@@ -4,6 +4,8 @@
 
 Streaks is a completion listener that maintains a daily streak and per-series streaks, plus a read endpoint. The core update logic is a small pure function (given last date + today → new current/longest) so it's exhaustively unit-testable; the repository handles the upsert.
 
+**Dependencies:** Streaks depends on the **user-timezone** abstraction (the pure `userTime` utility at `src/services/time/userTime.ts` and `settings.timezone` on `UserSettings`) to compute the user's local calendar day. "Consecutive days" must mean consecutive days in the *user's* zone, not the server's. Streaks must be built **after** user-timezone.
+
 ## Schema decision — the streak key column
 
 The existing `streaks` table has:
@@ -40,12 +42,15 @@ Injectable/explicit `today` for deterministic tests.
 Note: since a series can have many occurrence rows, the "label" query selects one subject per series_id (max(created_at)).
 
 ## streakService (`src/services/streaks/streakService.ts`)
-- `applyForCompletion(userId, seriesId | null, today): number` — load prev, compute `advanceStreak`, upsert, return new `current`.
+- `applyForCompletion(userId, seriesId | null, today): number` — load prev, compute `advanceStreak`, upsert, return new `current`. `today` is the caller-supplied `'YYYY-MM-DD'` and MUST be the user's Local_Calendar_Date (see below), never a server-local date.
 - `onTaskCompleted(event)` — the listener:
-  1. `dailyCurrent = applyForCompletion(userId, null, today)`.
-  2. if `event.task.repeat_series_id`: `seriesCurrent = applyForCompletion(userId, seriesId, today)`.
-  3. stash results on the event for achievements (see below).
+  1. Derive the user's local day: load the user's timezone (or reuse the user row already available on/around the event) and compute `today = userTime.localCalendarDate(userTime.resolveTimezone(user.settings.timezone))`. This is the single "today" reused for all `applyForCompletion` calls in this completion, so "consecutive days" means consecutive days in the user's zone (UTC when unset/invalid).
+  2. `dailyCurrent = applyForCompletion(userId, null, today)`.
+  3. if `event.task.repeat_series_id`: `seriesCurrent = applyForCompletion(userId, seriesId, today)`.
+  4. stash results on the event for achievements (see below).
 - `getStreaks(userId)` — for the API.
+
+**Timezone boundary:** timezone resolution happens here, at the service layer. The pure `advanceStreak(prev, today)` stays timezone-agnostic — it only compares `'YYYY-MM-DD'` strings and is unchanged by this dependency.
 
 ## Sharing streak results with achievements (Requirement 4)
 

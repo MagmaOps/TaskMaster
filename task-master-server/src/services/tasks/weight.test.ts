@@ -139,3 +139,133 @@ describe('calculateWeight — misc', () => {
     expect(Number.isInteger(w)).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Feature: user-timezone — timezone-aware weight behavior (Tasks 12.1 & 12.2)
+// ---------------------------------------------------------------------------
+
+import fc from 'fast-check';
+import { localCalendarDate } from '../time/userTime';
+
+/** Curated zones spanning the UTC-offset extremes plus the baseline. */
+const TIMEZONES = ['Asia/Tokyo', 'UTC', 'America/New_York', 'Pacific/Kiritimati'];
+
+/** Arbitrary that builds a reasonable WeightInput for a fixed injected `now`. */
+function weightInputArb(now: Date): fc.Arbitrary<WeightInput> {
+  return fc.record({
+    // createdAt within roughly ±20 days of `now`.
+    createdAt: fc
+      .integer({ min: -20, max: 5 })
+      .map((days) => new Date(now.getTime() + days * 86_400_000)),
+    priority: fc.constantFrom<'high' | 'medium' | 'low'>('high', 'medium', 'low'),
+    // dueDate sometimes null, sometimes a date string near `now`.
+    dueDate: fc.option(
+      fc
+        .integer({ min: -10, max: 20 })
+        .map((days) => localCalendarDate('UTC', new Date(now.getTime() + days * 86_400_000))),
+      { nil: null },
+    ),
+    dueTime: fc.option(
+      fc
+        .tuple(fc.integer({ min: 0, max: 23 }), fc.integer({ min: 0, max: 59 }))
+        .map(([h, m]) => `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`),
+      { nil: null },
+    ),
+    isRepeatable: fc.boolean(),
+    deferralCount: fc.integer({ min: 0, max: 10 }),
+    projectPriorityOrder: fc.option(fc.integer({ min: 1, max: 5 }), { nil: null }),
+    totalProjects: fc.integer({ min: 0, max: 5 }),
+    projectWeightingEnabled: fc.boolean(),
+  }).map((r) => ({ ...r, now }) as WeightInput);
+}
+
+describe('calculateWeight — timezone properties', () => {
+  // Feature: user-timezone, Property 7: UTC (or unset) timezone reproduces the pre-change baseline weight
+  it('Property 7: unset localToday equals localToday = localCalendarDate("UTC", now)', () => {
+    const now = new Date('2026-06-15T12:00:00');
+    fc.assert(
+      fc.property(weightInputArb(now), (base) => {
+        const utcToday = localCalendarDate('UTC', now);
+        const unset = calculateWeight({ ...base, localToday: undefined });
+        const explicitUtc = calculateWeight({ ...base, localToday: utcToday });
+        expect(unset).toBe(explicitUtc);
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  // Feature: user-timezone, Property 8: repeatable-due-today follows the user's local calendar day
+  it('Property 8: repeatable doubling applies iff dueDate === localCalendarDate(tz, now)', () => {
+    fc.assert(
+      fc.property(
+        fc.constantFrom(...TIMEZONES),
+        // Arbitrary valid instant across a wide range so zones diverge on the calendar day.
+        fc.date({
+          min: new Date('2020-01-01T00:00:00Z'),
+          max: new Date('2035-12-31T23:59:59Z'),
+          noInvalidDate: true,
+        }),
+        // dueDate near the instant so "due today" is sometimes true, sometimes false.
+        fc.integer({ min: -3, max: 3 }),
+        (tz, now, offsetDays) => {
+          const localToday = localCalendarDate(tz, now);
+          // Build a dueDate around the instant (in the same zone) to hit both branches.
+          const dueDate = localCalendarDate(tz, new Date(now.getTime() + offsetDays * 86_400_000));
+
+          const base = input({
+            now,
+            createdAt: now,
+            dueDate,
+            dueTime: null,
+            localToday,
+          });
+
+          const repeat = calculateWeight({ ...base, isRepeatable: true });
+          const nonRepeat = calculateWeight({ ...base, isRepeatable: false });
+
+          const dueToday = dueDate === localToday;
+          if (dueToday) {
+            // Doubling adds a strictly positive subtotal (base ≥ 1 always).
+            expect(repeat).toBeGreaterThan(nonRepeat);
+          } else {
+            expect(repeat).toBe(nonRepeat);
+          }
+        },
+      ),
+      { numRuns: 200 },
+    );
+  });
+});
+
+describe('calculateWeight — Tokyo vs UTC boundary (Task 12.2)', () => {
+  it('a repeatable task doubles for Tokyo but not for UTC at a day-boundary instant', () => {
+    // 2026-06-14T20:00Z → Tokyo (UTC+9) is 2026-06-15 05:00, UTC is 2026-06-14.
+    const now = new Date('2026-06-14T20:00:00Z');
+    expect(localCalendarDate('Asia/Tokyo', now)).toBe('2026-06-15');
+    expect(localCalendarDate('UTC', now)).toBe('2026-06-14');
+
+    const base = input({
+      now,
+      createdAt: now,
+      dueDate: '2026-06-15', // the Tokyo local date
+      dueTime: null,
+      isRepeatable: true,
+    });
+
+    const tokyo = calculateWeightBreakdown({
+      ...base,
+      localToday: localCalendarDate('Asia/Tokyo', now),
+    });
+    const utc = calculateWeightBreakdown({
+      ...base,
+      localToday: localCalendarDate('UTC', now),
+    });
+
+    // Due today in Tokyo → doubling applied.
+    expect(tokyo.repeatable).toBeGreaterThan(0);
+    // Not due today in UTC → no doubling.
+    expect(utc.repeatable).toBe(0);
+    // The zone label alone changes the outcome.
+    expect(tokyo.total).toBeGreaterThan(utc.total);
+  });
+});

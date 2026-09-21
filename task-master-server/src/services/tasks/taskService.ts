@@ -5,6 +5,11 @@ import * as userRepo from '../../repositories/userRepository';
 import { ApiError } from '../../utils/errors';
 import { calculateWeight, calculateWeightBreakdown, type WeightInput } from './weight';
 import {
+  resolveTimezone,
+  localCalendarDate,
+  nextCalendarDate,
+} from '../time/userTime';
+import {
   emitTaskCompleted,
   type CompletionEvent,
   type UnlockedAchievement,
@@ -29,18 +34,33 @@ interface UserWeightContext {
   orderById: Map<string, number>;
   isPremium: boolean;
   weightVisibility: boolean;
+  /** resolved IANA zone (UTC if unset/invalid) */
+  timezone: string;
+  /** the true current instant (age/due-proximity are offset-independent); localToday carries the user's zoned calendar day. */
+  now: Date;
+  /** localCalendarDate(timezone) for that same instant */
+  localToday: string;
 }
 
 async function loadUserWeightContext(userId: string): Promise<UserWeightContext> {
   const user = await userRepo.findById(userId);
   const projects = await projectRepo.listForUser(userId);
   const orderById = new Map(projects.map((p) => [p.id, p.priority_order]));
+  // Resolve the zone once and derive "now"/"today" from a single captured
+  // instant so the whole request shares one moment in the user's timezone.
+  const timezone = resolveTimezone(user?.settings.timezone);
+  const instant = new Date();
+  const now = instant;
+  const localToday = localCalendarDate(timezone, instant);
   return {
     projectWeightingEnabled: user?.settings.project_priority_enabled ?? true,
     totalProjects: projects.length,
     orderById,
     isPremium: user?.tier === 'premium',
     weightVisibility: user?.settings.weight_visibility_enabled ?? false,
+    timezone,
+    now,
+    localToday,
   };
 }
 
@@ -77,6 +97,8 @@ function buildWeightInput(task: TaskWithMeta, ctx: UserWeightContext): WeightInp
     projectPriorityOrder: bestOrder,
     totalProjects: ctx.totalProjects,
     projectWeightingEnabled: ctx.projectWeightingEnabled,
+    now: ctx.now,
+    localToday: ctx.localToday,
   };
 }
 
@@ -175,15 +197,17 @@ export async function deferTask(
   const existing = await taskRepo.findByIdForUser(userId, id);
   if (!existing) throw ApiError.notFound('Task not found');
 
-  const today = new Date();
+  // Load the user's weight context once: it carries the resolved timezone and
+  // local calendar date used below, and is reused for the returned DTO — no
+  // redundant user/projects query. In the UTC test env localToday equals the
+  // server-local day, so existing defer expectations are unchanged.
+  const ctx = await loadUserWeightContext(userId);
   const patch: { dueDate?: string | null; dueTime?: string | null; priority?: string } = {};
 
   if (option === 'later_today') {
-    patch.dueDate = toDateString(today);
+    patch.dueDate = ctx.localToday;
   } else if (option === 'tomorrow') {
-    const t = new Date(today);
-    t.setDate(t.getDate() + 1);
-    patch.dueDate = toDateString(t);
+    patch.dueDate = nextCalendarDate(ctx.localToday);
   } else {
     // sometime_later: lower priority one level, clear due date/time.
     const downgrade: Record<string, string> = { high: 'medium', medium: 'low', low: 'low' };
@@ -197,7 +221,6 @@ export async function deferTask(
   await deferralRepo.record(id, option);
 
   const full = (await taskRepo.findByIdForUser(userId, id)) as TaskWithMeta;
-  const ctx = await loadUserWeightContext(userId);
   return toDTO(full, ctx);
 }
 

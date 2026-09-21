@@ -32,6 +32,12 @@ export interface WeightInput {
   projectWeightingEnabled: boolean;
   /** injectable "now" for deterministic tests; defaults to new Date(). */
   now?: Date;
+  /**
+   * The user's Local_Calendar_Date ('YYYY-MM-DD') for the same instant as `now`.
+   * When omitted, defaults to the server-local calendar day of `now` — which,
+   * in the UTC test/CI environment, equals the pre-change behavior.
+   */
+  localToday?: string;
 }
 
 export interface WeightBreakdown {
@@ -66,20 +72,25 @@ export function projectMultiplier(priorityOrder: number, totalProjects: number):
   return Math.max(0, Math.min(1, raw));
 }
 
-function isSameLocalDay(a: Date, b: Date): boolean {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
+/** The server-local calendar day of `d` as 'YYYY-MM-DD' (local getters). */
+function serverLocalDay(d: Date): string {
+  const year = String(d.getFullYear()).padStart(4, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 /** Full breakdown of a task's weight contributions. */
 export function calculateWeightBreakdown(input: WeightInput): WeightBreakdown {
   const now = input.now ?? new Date();
+  const localToday = input.localToday ?? serverLocalDay(now);
 
   // 1. Base: age (whole days, +1 so creation day is non-zero) × priority.
-  const ageInDays = Math.floor((now.getTime() - input.createdAt.getTime()) / MS_PER_DAY);
+  //    Age is clamped at 0 (a task can't be negative days old); this guards
+  //    against sub-second created_at vs now clock skew, where a task's DB
+  //    now()-at-insert can be a few ms ahead of the later-captured `now`,
+  //    which would otherwise floor to -1 and zero out the whole weight.
+  const ageInDays = Math.max(0, Math.floor((now.getTime() - input.createdAt.getTime()) / MS_PER_DAY));
   const base = (ageInDays + 1) * PRIORITY_MULTIPLIER[input.priority];
 
   // 2/3. Due proximity — continuous on exact hours to the due moment.
@@ -114,7 +125,7 @@ export function calculateWeightBreakdown(input: WeightInput): WeightBreakdown {
 
   // 6. Repeatable due today → double.
   let repeatable = 0;
-  if (input.isRepeatable && dueMoment && isSameLocalDay(dueMoment, now)) {
+  if (input.isRepeatable && input.dueDate && input.dueDate === localToday) {
     repeatable = subtotal; // doubling => the added amount equals the current subtotal
     subtotal += repeatable;
   }

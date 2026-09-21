@@ -99,3 +99,126 @@ describe('auth routes', () => {
     expect(res.body.error.code).toBe('GOOGLE_NOT_CONFIGURED');
   });
 });
+
+/**
+ * Timezone integration tests (feature: user-timezone).
+ * Covers the PATCH /api/auth/me update contract, timezone at registration,
+ * and read-time coalescing for legacy rows missing the timezone key.
+ * Appended as a separate describe block; existing tests above are untouched.
+ * Unique emails per test avoid collisions with the shared truncating test DB.
+ */
+import { pool } from '../database/pool';
+
+describe('auth routes — timezone', () => {
+  it('PATCH /api/auth/me with a valid zone updates timezone and preserves other settings', async () => {
+    const email = 'tz-valid@example.com';
+    const reg = await request(app)
+      .post('/api/auth/register')
+      .send({ email, password: 'hunter2pass' });
+    expect(reg.status).toBe(201);
+
+    // Defaults after registration (no timezone supplied → 'UTC').
+    const defaults = reg.body.data.user.settings;
+    expect(defaults.timezone).toBe('UTC');
+    expect(defaults.theme).toBe('system');
+    expect(defaults.project_priority_enabled).toBe(true);
+
+    const token = reg.body.data.accessToken as string;
+    const patch = await request(app)
+      .patch('/api/auth/me')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ timezone: 'Asia/Tokyo' });
+
+    expect(patch.status).toBe(200);
+    const settings = patch.body.data.user.settings;
+    expect(settings.timezone).toBe('Asia/Tokyo');
+    // Only the timezone key changed; every other setting matches the defaults.
+    expect(settings.theme).toBe(defaults.theme);
+    expect(settings.project_priority_enabled).toBe(defaults.project_priority_enabled);
+    expect(settings.achievement_toasts_enabled).toBe(defaults.achievement_toasts_enabled);
+    expect(settings.focus_mode_enabled).toBe(defaults.focus_mode_enabled);
+    expect(settings.weight_visibility_enabled).toBe(defaults.weight_visibility_enabled);
+  });
+
+  it('PATCH /api/auth/me with an invalid zone returns 400 and leaves the stored value unchanged', async () => {
+    const email = 'tz-invalid@example.com';
+    const reg = await request(app)
+      .post('/api/auth/register')
+      .send({ email, password: 'hunter2pass' });
+    expect(reg.status).toBe(201);
+    const token = reg.body.data.accessToken as string;
+
+    const patch = await request(app)
+      .patch('/api/auth/me')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ timezone: 'Not/AZone' });
+    expect(patch.status).toBe(400);
+    expect(patch.body.error.code).toBe('VALIDATION_ERROR');
+
+    // The rejected write must not have mutated settings: still the register default 'UTC'.
+    const me = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${token}`);
+    expect(me.status).toBe(200);
+    expect(me.body.data.user.settings.timezone).toBe('UTC');
+  });
+
+  it('PATCH /api/auth/me without a token returns 401', async () => {
+    const res = await request(app).patch('/api/auth/me').send({ timezone: 'Asia/Tokyo' });
+    expect(res.status).toBe(401);
+    expect(res.body.data).toBeUndefined();
+  });
+
+  it('POST /register with a valid timezone stores it', async () => {
+    const email = 'tz-register-valid@example.com';
+    const reg = await request(app)
+      .post('/api/auth/register')
+      .send({ email, password: 'hunter2pass', timezone: 'America/New_York' });
+    expect(reg.status).toBe(201);
+    expect(reg.body.data.user.settings.timezone).toBe('America/New_York');
+
+    const token = reg.body.data.accessToken as string;
+    const me = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${token}`);
+    expect(me.body.data.user.settings.timezone).toBe('America/New_York');
+  });
+
+  it('POST /register without a timezone defaults to UTC', async () => {
+    const email = 'tz-register-none@example.com';
+    const reg = await request(app)
+      .post('/api/auth/register')
+      .send({ email, password: 'hunter2pass' });
+    expect(reg.status).toBe(201);
+    expect(reg.body.data.user.settings.timezone).toBe('UTC');
+  });
+
+  it('POST /register with a garbage timezone still succeeds and falls back to UTC', async () => {
+    const email = 'tz-register-garbage@example.com';
+    const reg = await request(app)
+      .post('/api/auth/register')
+      .send({ email, password: 'hunter2pass', timezone: 'Mars/Phobos' });
+    // Register never 400s on the timezone field; invalid values silently fall back.
+    expect(reg.status).toBe(201);
+    expect(reg.body.data.user.settings.timezone).toBe('UTC');
+  });
+
+  it('GET /me reports UTC for a legacy row whose settings lack the timezone key', async () => {
+    const email = 'tz-legacy@example.com';
+    const reg = await request(app)
+      .post('/api/auth/register')
+      .send({ email, password: 'hunter2pass', timezone: 'Asia/Tokyo' });
+    expect(reg.status).toBe(201);
+    const token = reg.body.data.accessToken as string;
+
+    // Simulate a pre-feature row by stripping the timezone key from the JSONB.
+    await pool.query(`UPDATE users SET settings = settings - 'timezone' WHERE email = $1`, [email]);
+
+    const me = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${token}`);
+    expect(me.status).toBe(200);
+    // Read-time coalescing in toPublicUser fills the missing key with 'UTC'.
+    expect(me.body.data.user.settings.timezone).toBe('UTC');
+  });
+});
