@@ -1,5 +1,12 @@
 import { query, withTransaction } from '../database/pool';
-import type { CreateTaskInput, TaskRow, TaskWithMeta, UpdateTaskInput } from '../types/task';
+import type { Priority } from '../services/tasks/weight';
+import type {
+  CreateTaskInput,
+  RepeatPattern,
+  TaskRow,
+  TaskWithMeta,
+  UpdateTaskInput,
+} from '../types/task';
 
 /**
  * Data access for tasks and their project associations.
@@ -46,7 +53,48 @@ export async function create(userId: string, data: CreateTaskInput): Promise<Tas
     );
     const task = res.rows[0];
     if (data.projectIds && data.projectIds.length > 0) {
+      // Real_Projects only (Req 9.2).
       await insertAssociations(client, task.id, data.projectIds);
+    } else {
+      // No real project → link the owner's Unassigned project (Req 9.1).
+      await linkDefault(client, userId, task.id);
+    }
+    return task;
+  });
+}
+
+export interface NewOccurrence {
+  userId: string;
+  subject: string;
+  priority: Priority;
+  dueDate: string; // computed next due date 'YYYY-MM-DD'
+  dueTime: string | null; // carried over
+  repeatPattern: RepeatPattern;
+  repeatSeriesId: string; // SAME series as the completed task (NOT a fresh uuid)
+  projectIds: string[];
+}
+
+export async function createOccurrence(occ: NewOccurrence): Promise<TaskRow> {
+  return withTransaction(async (client) => {
+    // Unlike `create`, the series id is supplied explicitly so the new occurrence
+    // stays in the completed task's series (never a fresh gen_random_uuid()).
+    const res = await client.query<TaskRow>(
+      `INSERT INTO tasks (user_id, subject, priority, due_date, due_time, is_repeatable, repeat_pattern, repeat_series_id)
+       VALUES ($1, $2, $3, $4, $5, true, $6, $7)
+       RETURNING *`,
+      [
+        occ.userId,
+        occ.subject,
+        occ.priority,
+        occ.dueDate,
+        occ.dueTime,
+        JSON.stringify(occ.repeatPattern),
+        occ.repeatSeriesId,
+      ],
+    );
+    const task = res.rows[0];
+    if (occ.projectIds.length > 0) {
+      await insertAssociations(client, task.id, occ.projectIds);
     }
     return task;
   });
@@ -124,9 +172,15 @@ export async function update(
     if (!task) return null;
 
     if (patch.projectIds !== undefined) {
+      // Replace associations wholesale: removing ALL rows first (including any
+      // prior Unassigned membership) guarantees exclusivity (Req 9.6).
       await client.query('DELETE FROM task_projects WHERE task_id = $1', [id]);
       if (patch.projectIds.length > 0) {
+        // Real_Projects only; Unassigned membership is never left behind (Req 9.4).
         await insertAssociations(client, id, patch.projectIds);
+      } else {
+        // Emptied set falls back to the Unassigned project (Req 9.3).
+        await linkDefault(client, userId, id);
       }
     }
     return task;
@@ -197,5 +251,17 @@ async function insertAssociations(
     `INSERT INTO task_projects (task_id, project_id) VALUES ${values}
      ON CONFLICT DO NOTHING`,
     [taskId, ...unique],
+  );
+}
+
+// Links a task to its owner's Unassigned (default) project. The default project
+// id is resolved in SQL so no extra round trip is needed. Used when a task has
+// no Real_Project so that "unassigned" is a concrete, exclusive membership.
+async function linkDefault(client: PoolClient, userId: string, taskId: string): Promise<void> {
+  await client.query(
+    `INSERT INTO task_projects (task_id, project_id)
+     SELECT $1, id FROM projects WHERE user_id = $2 AND is_default
+     ON CONFLICT DO NOTHING`,
+    [taskId, userId],
   );
 }

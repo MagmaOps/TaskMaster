@@ -1,5 +1,6 @@
 import * as userRepo from '../../repositories/userRepository';
 import * as refreshRepo from '../../repositories/refreshTokenRepository';
+import * as projectRepo from '../../repositories/projectRepository';
 import { ApiError } from '../../utils/errors';
 import { toPublicUser, type PublicUser, type UserRow } from '../../types';
 import {
@@ -58,6 +59,7 @@ export async function register(params: {
     displayName: params.displayName ?? null,
     timezone: resolveTimezone(params.timezone),
   });
+  await projectRepo.ensureDefault(user.id);
   return issueTokens(user, params.userAgent);
 }
 
@@ -118,6 +120,7 @@ export async function loginWithGoogle(params: {
     providerUserId: profile.sub,
     timezone: resolveTimezone(params.timezone),
   });
+  await projectRepo.ensureDefault(created.id);
   return { ...(await issueTokens(created, params.userAgent)), isNewUser: true };
 }
 

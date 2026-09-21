@@ -16,10 +16,48 @@ import type {
  * transient collisions (see reorder's two-phase approach and remove's gap-close).
  */
 
-/** For weighting: lightweight id + priority order list. */
-export async function listForUser(userId: string): Promise<{ id: string; priority_order: number }[]> {
-  const res = await query<{ id: string; priority_order: number }>(
-    'SELECT id, priority_order FROM projects WHERE user_id = $1 ORDER BY priority_order ASC',
+/**
+ * Idempotently ensure the user's **Unassigned** project exists and return it.
+ *
+ * The `is_default` uniqueness is enforced by a *partial* unique index
+ * (`uq_projects_one_default ... WHERE is_default`), so the upsert must repeat
+ * that index predicate in its `ON CONFLICT` target. On a conflict the INSERT
+ * returns no row, so we SELECT the pre-existing default. (Req 8.1, 8.4)
+ */
+export async function ensureDefault(userId: string): Promise<ProjectRow> {
+  const inserted = await query<ProjectRow>(
+    `INSERT INTO projects (user_id, name, priority_order, is_default)
+     VALUES ($1, 'Unassigned', 0, true)
+     ON CONFLICT (user_id) WHERE is_default DO NOTHING
+     RETURNING *`,
+    [userId],
+  );
+  if (inserted.rows[0]) return inserted.rows[0];
+  const existing = await query<ProjectRow>(
+    'SELECT * FROM projects WHERE user_id = $1 AND is_default',
+    [userId],
+  );
+  return existing.rows[0];
+}
+
+/** The user's Unassigned project, or null if it does not exist yet. */
+export async function getDefault(userId: string): Promise<ProjectRow | null> {
+  const res = await query<ProjectRow>('SELECT * FROM projects WHERE user_id = $1 AND is_default', [
+    userId,
+  ]);
+  return res.rows[0] ?? null;
+}
+
+/**
+ * For weighting: lightweight id + priority order + default flag list. The
+ * weight path uses `is_default` to exclude the Unassigned project. Ordered by
+ * priority_order so the Unassigned row (order 0) sorts first.
+ */
+export async function listForUser(
+  userId: string,
+): Promise<{ id: string; priority_order: number; is_default: boolean }[]> {
+  const res = await query<{ id: string; priority_order: number; is_default: boolean }>(
+    'SELECT id, priority_order, is_default FROM projects WHERE user_id = $1 ORDER BY priority_order ASC',
     [userId],
   );
   return res.rows;
@@ -44,10 +82,12 @@ export async function listForUserWithCounts(userId: string): Promise<ProjectWith
   return res.rows;
 }
 
+/** Count of the user's Real_Projects (excludes Unassigned) for the 20-max. */
 export async function countForUser(userId: string): Promise<number> {
-  const res = await query<{ cnt: string }>('SELECT COUNT(*) AS cnt FROM projects WHERE user_id = $1', [
-    userId,
-  ]);
+  const res = await query<{ cnt: string }>(
+    'SELECT COUNT(*) AS cnt FROM projects WHERE user_id = $1 AND is_default = false',
+    [userId],
+  );
   return Number(res.rows[0].cnt);
 }
 
@@ -156,14 +196,19 @@ export async function remove(userId: string, id: string): Promise<boolean> {
   });
 }
 
-/** Throws 400 if any of the given project ids is not owned by the user. */
+/**
+ * Throws 400 if any of the given project ids is not owned by the user, or is a
+ * default (Unassigned) project. The Unassigned membership is system-managed, so
+ * clients must not supply its id in task create/update `projectIds` (Req 9.5).
+ */
 export async function assertOwned(userId: string, projectIds: string[]): Promise<void> {
   if (projectIds.length === 0) return;
-  const res = await query<{ id: string }>(
-    'SELECT id FROM projects WHERE user_id = $1 AND id = ANY($2::uuid[])',
+  const res = await query<{ id: string; is_default: boolean }>(
+    'SELECT id, is_default FROM projects WHERE user_id = $1 AND id = ANY($2::uuid[])',
     [userId, projectIds],
   );
-  if (res.rows.length !== new Set(projectIds).size) {
+  const hasDefault = res.rows.some((r) => r.is_default);
+  if (res.rows.length !== new Set(projectIds).size || hasDefault) {
     throw ApiError.badRequest('VALIDATION_ERROR', 'One or more project ids are invalid');
   }
 }

@@ -45,7 +45,13 @@ interface UserWeightContext {
 async function loadUserWeightContext(userId: string): Promise<UserWeightContext> {
   const user = await userRepo.findById(userId);
   const projects = await projectRepo.listForUser(userId);
-  const orderById = new Map(projects.map((p) => [p.id, p.priority_order]));
+  // Exclude the Unassigned (default) project from weighting: it must not
+  // influence the highest-priority pick nor the auto-distribution denominator
+  // (Req 11.2, 11.3, 11.4). A task whose only membership is Unassigned then has
+  // no id in orderById, so buildWeightInput finds no project order (null) and
+  // the weight is identical to a no-project task.
+  const realProjects = projects.filter((p) => !p.is_default);
+  const orderById = new Map(realProjects.map((p) => [p.id, p.priority_order]));
   // Resolve the zone once and derive "now"/"today" from a single captured
   // instant so the whole request shares one moment in the user's timezone.
   const timezone = resolveTimezone(user?.settings.timezone);
@@ -54,7 +60,7 @@ async function loadUserWeightContext(userId: string): Promise<UserWeightContext>
   const localToday = localCalendarDate(timezone, instant);
   return {
     projectWeightingEnabled: user?.settings.project_priority_enabled ?? true,
-    totalProjects: projects.length,
+    totalProjects: realProjects.length,
     orderById,
     isPremium: user?.tier === 'premium',
     weightVisibility: user?.settings.weight_visibility_enabled ?? false,
@@ -81,10 +87,16 @@ function normalizeTime(value: unknown): string | null {
 }
 
 function buildWeightInput(task: TaskWithMeta, ctx: UserWeightContext): WeightInput {
-  // Highest-priority (lowest priority_order) project the task belongs to.
+  // Highest-priority (lowest priority_order) Real_Project the task belongs to.
+  // Only ids present in ctx.orderById count: default (Unassigned) projects are
+  // excluded from orderById (see loadUserWeightContext), and an absent id means
+  // "excluded", so we skip it rather than falling back to its embedded
+  // priorityOrder (Unassigned's embedded order is 0 and would wrongly win).
+  // Real_Project ids are always in orderById, so this preserves their behavior.
   let bestOrder: number | null = null;
   for (const p of task.projects) {
-    const order = ctx.orderById.get(p.id) ?? p.priorityOrder;
+    const order = ctx.orderById.get(p.id);
+    if (order === undefined) continue;
     if (bestOrder === null || order < bestOrder) bestOrder = order;
   }
   return {

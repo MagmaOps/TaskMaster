@@ -29,8 +29,8 @@ describe('projectService (unit)', () => {
 
   it('rejects a reorder whose id set does not match the user’s projects', async () => {
     mocked.listForUser.mockResolvedValue([
-      { id: 'p1', priority_order: 1 },
-      { id: 'p2', priority_order: 2 },
+      { id: 'p1', priority_order: 1, is_default: false },
+      { id: 'p2', priority_order: 2, is_default: false },
     ]);
     // Missing p2, includes unknown p9.
     await expect(reorderProjects('u1', ['p1', 'p9'])).rejects.toMatchObject({ statusCode: 400 });

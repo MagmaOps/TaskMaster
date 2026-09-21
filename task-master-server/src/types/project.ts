@@ -6,6 +6,7 @@ export interface ProjectRow {
   name: string;
   priority_order: number;
   color: string | null;
+  is_default: boolean;
   created_at: Date;
   updated_at: Date;
 }
@@ -18,6 +19,7 @@ export interface ProjectDTO {
   id: string;
   name: string;
   priorityOrder: number;
+  isDefault: boolean;
   color: string | null;
   taskCount: number;
   createdAt: string;

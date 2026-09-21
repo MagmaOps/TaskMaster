@@ -4,16 +4,21 @@
  */
 import * as userRepo from '../../repositories/userRepository';
 import * as refreshRepo from '../../repositories/refreshTokenRepository';
+import * as projectRepo from '../../repositories/projectRepository';
 import * as googleVerifier from './googleVerifier';
 import { loginWithGoogle } from './authService';
 import type { UserRow } from '../../types';
 
 jest.mock('../../repositories/userRepository');
 jest.mock('../../repositories/refreshTokenRepository');
+// The new-user path calls projectRepo.ensureDefault after creating the account;
+// mock the whole module so this unit test stays isolated from the database.
+jest.mock('../../repositories/projectRepository');
 jest.mock('./googleVerifier');
 
 const mockedUserRepo = jest.mocked(userRepo);
 const mockedRefreshRepo = jest.mocked(refreshRepo);
+const mockedProjectRepo = jest.mocked(projectRepo);
 const mockedVerifier = jest.mocked(googleVerifier);
 
 function fakeUser(overrides: Partial<UserRow> = {}): UserRow {
@@ -41,6 +46,7 @@ function fakeUser(overrides: Partial<UserRow> = {}): UserRow {
 
 beforeEach(() => {
   mockedRefreshRepo.create.mockResolvedValue({} as never);
+  mockedProjectRepo.ensureDefault.mockResolvedValue({} as never);
   mockedVerifier.verifyGoogleIdToken.mockResolvedValue({
     sub: 'google-sub-1',
     email: 'g@example.com',

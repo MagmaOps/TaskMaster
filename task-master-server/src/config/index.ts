@@ -41,6 +41,9 @@ export interface AppConfig {
   economy: {
     premiumEarnRate: number;
   };
+  achievements: {
+    highWeightThreshold: number;
+  };
 }
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID ?? '';
@@ -75,5 +78,8 @@ export const config: AppConfig = {
   },
   economy: {
     premiumEarnRate: parseFloat(process.env.ECONOMY_PREMIUM_EARN_RATE ?? '1.5'),
+  },
+  achievements: {
+    highWeightThreshold: parseInt(process.env.ACHIEVEMENTS_HIGH_WEIGHT_THRESHOLD ?? '200', 10),
   },
 };

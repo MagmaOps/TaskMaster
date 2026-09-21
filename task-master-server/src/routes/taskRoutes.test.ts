@@ -33,7 +33,10 @@ describe('task management', () => {
     expect(res.status).toBe(201);
     expect(res.body.data.subject).toBe('Write report');
     expect(res.body.data.weight).toBeGreaterThan(0);
-    expect(res.body.data.projects).toEqual([]);
+    // A task created with no projectIds is a member of the Unassigned project.
+    expect(res.body.data.projects).toHaveLength(1);
+    expect(res.body.data.projects[0].name).toBe('Unassigned');
+    expect(res.body.data.projects[0].priorityOrder).toBe(0);
   });
 
   it('lists tasks sorted by weight (highest first)', async () => {

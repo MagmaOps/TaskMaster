@@ -16,6 +16,7 @@ function toDTO(row: ProjectRow, taskCount: number): ProjectDTO {
     id: row.id,
     name: row.name,
     priorityOrder: row.priority_order,
+    isDefault: row.is_default,
     color: row.color,
     taskCount,
     createdAt: new Date(row.created_at).toISOString(),
@@ -33,6 +34,9 @@ export async function createProject(userId: string, input: CreateProjectInput): 
       'VALIDATION_ERROR',
       `You can have a maximum of ${config.limits.maxProjectsPerUser} projects`,
     );
+  }
+  if (input.name.trim().toLowerCase() === 'unassigned') {
+    throw ApiError.conflict('A project with this name already exists');
   }
   const existing = await projectRepo.findByNameForUser(userId, input.name);
   if (existing) {
@@ -55,7 +59,14 @@ export async function updateProject(
   const current = await projectRepo.findByIdForUser(userId, id);
   if (!current) throw ApiError.notFound('Project not found');
 
+  if (current.is_default) {
+    throw ApiError.badRequest('VALIDATION_ERROR', 'The Unassigned project cannot be modified');
+  }
+
   if (patch.name !== undefined) {
+    if (patch.name.trim().toLowerCase() === 'unassigned') {
+      throw ApiError.conflict('A project with this name already exists');
+    }
     const dupe = await projectRepo.findByNameForUser(userId, patch.name);
     if (dupe && dupe.id !== id) {
       throw ApiError.conflict('A project with this name already exists');
@@ -70,11 +81,11 @@ export async function updateProject(
 }
 
 export async function reorderProjects(userId: string, orderedIds: string[]): Promise<ProjectDTO[]> {
-  const current = await projectRepo.listForUser(userId);
+  const current = (await projectRepo.listForUser(userId)).filter((p) => !p.is_default);
   const currentIds = new Set(current.map((p) => p.id));
   const providedIds = new Set(orderedIds);
 
-  // Must be exactly the user's full set: same size, no dupes, all belong to user.
+  // Must be exactly the user's Real_Project set: same size, no dupes, all belong to user.
   if (
     orderedIds.length !== current.length ||
     providedIds.size !== orderedIds.length ||
@@ -91,6 +102,11 @@ export async function reorderProjects(userId: string, orderedIds: string[]): Pro
 }
 
 export async function deleteProject(userId: string, id: string): Promise<void> {
+  const current = await projectRepo.findByIdForUser(userId, id);
+  if (!current) throw ApiError.notFound('Project not found');
+  if (current.is_default) {
+    throw ApiError.badRequest('VALIDATION_ERROR', 'The Unassigned project cannot be deleted');
+  }
   const ok = await projectRepo.remove(userId, id);
   if (!ok) throw ApiError.notFound('Project not found');
 }

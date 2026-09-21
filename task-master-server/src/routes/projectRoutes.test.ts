@@ -40,11 +40,13 @@ describe('projects management', () => {
       .set(auth(token))
       .send({ subject: 't', priority: 'high', projectIds: [proj.id] });
     let list = await request(app).get('/api/projects').set(auth(token));
-    expect(list.body.data[0].taskCount).toBe(1);
+    const findProj = (data: { id: string; taskCount: number }[]) =>
+      data.find((p) => p.id === proj.id) as { taskCount: number };
+    expect(findProj(list.body.data).taskCount).toBe(1);
     // Complete the task → count 0 (only active tasks counted).
     await request(app).put(`/api/tasks/${task.body.data.id}/complete`).set(auth(token));
     list = await request(app).get('/api/projects').set(auth(token));
-    expect(list.body.data[0].taskCount).toBe(0);
+    expect(findProj(list.body.data).taskCount).toBe(0);
   });
 
   it('enforces the 20-project maximum', async () => {
@@ -76,8 +78,9 @@ describe('projects management', () => {
       .set(auth(token))
       .send({ projectIds: [c.id, a.id, b.id] });
     expect(res.status).toBe(200);
-    expect(res.body.data.map((p: { name: string }) => p.name)).toEqual(['C', 'A', 'B']);
-    expect(res.body.data.map((p: { priorityOrder: number }) => p.priorityOrder)).toEqual([1, 2, 3]);
+    const reordered = res.body.data.filter((p: { isDefault: boolean }) => !p.isDefault);
+    expect(reordered.map((p: { name: string }) => p.name)).toEqual(['C', 'A', 'B']);
+    expect(reordered.map((p: { priorityOrder: number }) => p.priorityOrder)).toEqual([1, 2, 3]);
   });
 
   it('rejects a reorder that is not the full set', async () => {
@@ -108,7 +111,9 @@ describe('projects management', () => {
     const list = await request(app).get('/api/projects').set(auth(token));
     // A stays 1, C moves from 3 to 2 (gap closed).
     const byName = Object.fromEntries(
-      list.body.data.map((p: { name: string; priorityOrder: number }) => [p.name, p.priorityOrder]),
+      list.body.data
+        .filter((p: { isDefault: boolean }) => !p.isDefault)
+        .map((p: { name: string; priorityOrder: number }) => [p.name, p.priorityOrder]),
     );
     expect(byName).toEqual({ A: 1, C: 2 });
     void a;

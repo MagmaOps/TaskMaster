@@ -1,0 +1,185 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1. Config: high-weight threshold": [
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790013427036
+      },
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790013439609
+      },
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790013502548
+      }
+    ],
+    "2. Types": [
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790013427401
+      },
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790013440324
+      },
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790013502846
+      }
+    ],
+    "3. achievementsRepository (`src/repositories/achievementsRepository.ts`)": [
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790013427551
+      },
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790013510630
+      },
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790013613884
+      }
+    ],
+    "4. Pure candidate helper (`candidateUnlocks`)": [
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790013427732
+      },
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790013510769
+      },
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790013614173
+      }
+    ],
+    "5. achievementsService orchestration": [
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790013428010
+      },
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790013619203
+      },
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790013722954
+      }
+    ],
+    "6. Controller, routes, registration, mount": [
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790013428193
+      },
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790013728244
+      },
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790014001470
+      }
+    ],
+    "7. Property-based tests (fast-check, min 100 runs each, tagged `// Feature: achievements, Property N: ...`)": [
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790013428331
+      },
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790013620180
+      },
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790013629452
+      },
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790013729341
+      },
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790014001711
+      }
+    ],
+    "8. Unit / smoke tests": [
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790013428484
+      },
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790014007635
+      },
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790014388869
+      }
+    ],
+    "9. Integration tests (Jest + Supertest; listener-reset determinism — register streak THEN achievements)": [
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790013428760
+      },
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790014007948
+      },
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790014390388
+      }
+    ],
+    "10. Verify — `npm run typecheck` + full `npm test` green (no regressions to the existing 118)": [
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790013428931
+      },
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790014397008
+      },
+      {
+        "executionId": "4ccf8691-3eb3-41a1-ae3e-d08effb9e307",
+        "chatSessionId": "sess_763c41f6-f84e-4e0f-8133-7227f533090a",
+        "timestamp": 1790014427081
+      }
+    ]
+  }
+}
