@@ -93,3 +93,88 @@ export interface RefreshData {
 export interface MeData {
   user: User;
 }
+
+// --- Tasks & projects (mirrors backend types/task.ts + types/project.ts) ---
+
+export type Priority = 'high' | 'medium' | 'low';
+export type DeferOption = 'later_today' | 'tomorrow' | 'sometime_later';
+
+export interface RepeatPattern {
+  frequency: 'daily' | 'weekly';
+  interval?: number;
+  days_of_week?: number[]; // 0-6 for weekly
+  end_date?: string | null;
+}
+
+/** A project association as seen from a task. */
+export interface TaskProjectRef {
+  id: string;
+  name: string;
+  priorityOrder: number;
+  color: string | null;
+}
+
+export interface WeightBreakdown {
+  base: number;
+  dueProximity: number;
+  project: number;
+  deferral: number;
+  repeatable: number;
+  total: number;
+}
+
+export interface TaskDTO {
+  id: string;
+  subject: string;
+  priority: Priority;
+  dueDate: string | null;
+  dueTime: string | null;
+  isRepeatable: boolean;
+  repeatPattern: RepeatPattern | null;
+  createdAt: string;
+  completedAt: string | null;
+  projects: TaskProjectRef[];
+  deferralCount: number;
+  weight: number;
+  weightBreakdown?: WeightBreakdown;
+}
+
+export interface CreateTaskInput {
+  subject: string;
+  priority: Priority;
+  dueDate?: string | null;
+  dueTime?: string | null;
+  projectIds?: string[];
+  isRepeatable?: boolean;
+  repeatPattern?: RepeatPattern | null;
+}
+
+export type UpdateTaskInput = Partial<CreateTaskInput>;
+
+/** Minimal achievement shape returned by the complete endpoint for celebration. */
+export interface UnlockedAchievement {
+  type: string;
+  data?: Record<string, unknown>;
+}
+
+export interface CompleteTaskData extends TaskDTO {
+  weightAtCompletion: number;
+  unlocked: UnlockedAchievement[];
+}
+
+export interface ProjectDTO {
+  id: string;
+  name: string;
+  priorityOrder: number;
+  isDefault: boolean;
+  color: string | null;
+  taskCount: number;
+  createdAt: string;
+}
+
+export interface CreateProjectInput {
+  name: string;
+  color?: string | null;
+}
+
+export type UpdateProjectInput = Partial<CreateProjectInput>;

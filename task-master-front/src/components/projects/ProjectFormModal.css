@@ -1,0 +1,52 @@
+.projectform__colors {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  margin: 0 0 14px;
+}
+
+.projectform__colors legend {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 4px;
+}
+
+.projectform__swatches {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.projectform__swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  cursor: pointer;
+  padding: 0;
+}
+
+.projectform__swatch--active {
+  border-color: var(--color-text);
+  box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-text);
+}
+
+.projectform__swatch--none {
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.projectform__error {
+  color: var(--color-danger);
+  font-size: 14px;
+  margin: 4px 0 12px;
+}
+
+.projectform__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}

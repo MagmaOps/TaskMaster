@@ -1,0 +1,38 @@
+.tasklist {
+  min-height: 100%;
+}
+
+.tasklist__content {
+  padding: 8px 16px 16px;
+}
+
+.tasklist__error {
+  padding: 32px 24px;
+  text-align: center;
+  color: var(--color-danger);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.tasklist__empty {
+  padding: 48px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.tasklist__empty-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--color-text);
+}
+
+.tasklist__empty-text {
+  margin: 0 0 8px;
+  color: var(--color-text-muted);
+}

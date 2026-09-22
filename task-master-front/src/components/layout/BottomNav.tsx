@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useTasks } from '../../contexts/TaskContext';
 import './BottomNav.css';
 
 interface NavItem {
@@ -34,20 +35,23 @@ function NavButton({ item }: { item: NavItem }) {
 }
 
 export function BottomNav() {
+  const { openQuickAdd } = useTasks();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleAdd = () => {
+    // Quick-Add lives on the Tasks page; go there first if elsewhere, then open.
+    if (location.pathname !== '/') navigate('/');
+    openQuickAdd();
+  };
+
   return (
     <nav className="bottomnav" aria-label="Primary">
       {LEFT_ITEMS.map((item) => (
         <NavButton key={item.to} item={item} />
       ))}
 
-      {/* Center Add (+). Wiring to the Quick-Add modal is a later spec. */}
-      <button
-        type="button"
-        className="bottomnav__add"
-        aria-label="Add task"
-        title="Add task (coming soon)"
-        disabled
-      >
+      <button type="button" className="bottomnav__add" aria-label="Add task" onClick={handleAdd}>
         +
       </button>
 

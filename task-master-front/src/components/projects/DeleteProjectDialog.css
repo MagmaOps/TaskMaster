@@ -1,0 +1,17 @@
+.deleteproject__text {
+  margin: 0 0 14px;
+  font-size: 15px;
+  color: var(--color-text);
+}
+
+.deleteproject__error {
+  color: var(--color-danger);
+  font-size: 14px;
+  margin: 0 0 12px;
+}
+
+.deleteproject__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}

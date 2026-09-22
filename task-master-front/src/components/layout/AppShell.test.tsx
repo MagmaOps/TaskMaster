@@ -14,6 +14,11 @@ vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({ user, logout }),
 }));
 
+const openQuickAdd = vi.fn();
+vi.mock('../../contexts/TaskContext', () => ({
+  useTasks: () => ({ openQuickAdd }),
+}));
+
 beforeEach(() => {
   vi.clearAllMocks();
   user = { displayName: 'Ada', email: 'a@b.com' };
@@ -43,10 +48,12 @@ describe('BottomNav', () => {
     expect(screen.getByLabelText('Tasks').className).not.toContain('bottomnav__link--active');
   });
 
-  it('renders a prominent center Add button (disabled placeholder this spec)', () => {
+  it('renders a prominent center Add button that opens Quick-Add', async () => {
     renderNav();
     const add = screen.getByLabelText('Add task');
-    expect(add).toBeDisabled();
+    expect(add).toBeEnabled();
+    await userEvent.click(add);
+    expect(openQuickAdd).toHaveBeenCalled();
   });
 });
 
