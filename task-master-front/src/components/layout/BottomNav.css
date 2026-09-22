@@ -1,0 +1,57 @@
+.bottomnav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: var(--color-surface-raised);
+  border-top: 1px solid var(--color-border);
+  z-index: 500;
+}
+
+.bottomnav__link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  flex: 1;
+  min-height: 48px;
+  text-decoration: none;
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.bottomnav__link--active {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.bottomnav__icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.bottomnav__add {
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  margin: 0 4px;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-primary-text);
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+}
+
+.bottomnav__add:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}

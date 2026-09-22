@@ -1,0 +1,11 @@
+.app-shell {
+  min-height: 100vh;
+  background: var(--color-bg);
+}
+
+.app-shell__main {
+  /* Leave room for the fixed bottom nav so content is never hidden behind it. */
+  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 16px);
+  max-width: 640px;
+  margin: 0 auto;
+}
