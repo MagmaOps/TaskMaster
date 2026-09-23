@@ -90,3 +90,38 @@
   border: 1px solid var(--color-border);
   color: var(--color-text-muted);
 }
+
+.taskcard-wrap {
+  position: relative;
+}
+
+.taskcard__weight {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.taskcard-wrap--top .taskcard__weight {
+  top: 20px;
+  right: 20px;
+}
+
+.taskcard__weight-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.taskcard__weight-info {
+  background: none;
+  border: none;
+  padding: 0 2px;
+  cursor: pointer;
+  color: var(--color-primary);
+  font-size: 14px;
+  line-height: 1;
+}

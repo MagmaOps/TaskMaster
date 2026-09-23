@@ -74,6 +74,7 @@ const baseUser: User = {
     theme: 'system',
     timezone: 'UTC',
   },
+  isAdmin: false,
 };
 
 beforeEach(() => {
@@ -137,5 +138,39 @@ describe('TaskList', () => {
     render(<TaskList />);
     expect(await screen.findByText(/could not load/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
+  });
+
+  it('seeds the focus selection on mount when focus_mode_enabled is on', async () => {
+    user = { ...baseUser, settings: { ...baseUser.settings, focus_mode_enabled: true } };
+    ctx.tasks = [task('t1', 'Top', 100)];
+    render(<TaskList />);
+    await screen.findByText('Top');
+    expect(setSelection).toHaveBeenCalledWith({ kind: 'focus' });
+  });
+
+  it('does not seed focus when focus_mode_enabled is off', async () => {
+    ctx.tasks = [task('t1', 'Top', 100)];
+    render(<TaskList />);
+    await screen.findByText('Top');
+    expect(setSelection).not.toHaveBeenCalledWith({ kind: 'focus' });
+  });
+
+  it('shows task weight only for a premium user with weight visibility on', async () => {
+    user = {
+      ...baseUser,
+      tier: 'premium',
+      settings: { ...baseUser.settings, weight_visibility_enabled: true },
+    };
+    ctx.tasks = [task('t1', 'Weighted', 77)];
+    render(<TaskList />);
+    expect(await screen.findByText('77')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /weight breakdown/i })).toBeInTheDocument();
+  });
+
+  it('hides task weight for a free user', async () => {
+    ctx.tasks = [task('t1', 'Weighted', 77)];
+    render(<TaskList />);
+    await screen.findByText('Weighted');
+    expect(screen.queryByText('77')).toBeNull();
   });
 });

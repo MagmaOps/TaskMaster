@@ -2,7 +2,7 @@ import * as userRepo from '../../repositories/userRepository';
 import * as refreshRepo from '../../repositories/refreshTokenRepository';
 import * as projectRepo from '../../repositories/projectRepository';
 import { ApiError } from '../../utils/errors';
-import { toPublicUser, type PublicUser, type UserRow } from '../../types';
+import { toPublicUser, type PublicUser, type UserRow, type UserSettings } from '../../types';
 import {
   generateRefreshToken,
   hashRefreshToken,
@@ -156,17 +156,65 @@ export async function getProfile(userId: string): Promise<PublicUser> {
 }
 
 /**
- * Persists a user's timezone into their settings JSONB, preserving every other
- * settings key. `tz` is resolved defensively (invalid → 'UTC') even though the
- * route validator already rejects invalid values on the explicit-update path.
+ * A partial settings update: any subset of the user-editable settings keys.
+ * The route validator has already type-checked each present key.
  */
-export async function updateTimezone(userId: string, tz: unknown): Promise<PublicUser> {
+export type SettingsPatch = Partial<{
+  theme: UserSettings['theme'];
+  focus_mode_enabled: boolean;
+  achievement_toasts_enabled: boolean;
+  project_priority_enabled: boolean;
+  weight_visibility_enabled: boolean;
+  timezone: unknown;
+  /**
+   * Subscription tier. Admin-only: applied only when the requesting user has
+   * `is_admin` (a developer affordance for testing premium features). Ignored
+   * for non-admins — the client cannot self-promote.
+   */
+  tier: 'free' | 'premium';
+}>;
+
+/**
+ * Merges a partial settings patch into the user's settings JSONB, preserving
+ * every unspecified key. `timezone` is resolved defensively (invalid → 'UTC')
+ * even though the route validator already rejects invalid values.
+ *
+ * Tier guard (defense in depth): `weight_visibility_enabled` is a premium-only
+ * preference, so it is dropped from the patch for non-premium users regardless
+ * of what the client sends; the UI also hides the control.
+ */
+export async function updateSettings(userId: string, patch: SettingsPatch): Promise<PublicUser> {
   const user = await userRepo.findById(userId);
   if (!user) {
     throw ApiError.notFound('User not found');
   }
-  const timezone = resolveTimezone(tz);
-  const settings = { ...user.settings, timezone };
-  const updated = await userRepo.updateSettings(userId, settings);
+
+  // Admin-only tier change (developer affordance). Applied first so a same-
+  // request weight-visibility change sees the new tier. Silently ignored for
+  // non-admins — the client cannot grant itself premium.
+  let effectiveTier = user.tier;
+  if (patch.tier !== undefined && user.is_admin) {
+    if (patch.tier !== user.tier) {
+      const bumped = await userRepo.updateTier(userId, patch.tier);
+      effectiveTier = bumped.tier;
+    }
+  }
+
+  const next: UserSettings = { ...user.settings };
+  if (patch.theme !== undefined) next.theme = patch.theme;
+  if (patch.focus_mode_enabled !== undefined) next.focus_mode_enabled = patch.focus_mode_enabled;
+  if (patch.achievement_toasts_enabled !== undefined) {
+    next.achievement_toasts_enabled = patch.achievement_toasts_enabled;
+  }
+  if (patch.project_priority_enabled !== undefined) {
+    next.project_priority_enabled = patch.project_priority_enabled;
+  }
+  // Premium-only: ignore for non-premium users (uses the possibly-just-updated tier).
+  if (patch.weight_visibility_enabled !== undefined && effectiveTier === 'premium') {
+    next.weight_visibility_enabled = patch.weight_visibility_enabled;
+  }
+  if (patch.timezone !== undefined) next.timezone = resolveTimezone(patch.timezone);
+
+  const updated = await userRepo.updateSettings(userId, next);
   return toPublicUser(updated);
 }

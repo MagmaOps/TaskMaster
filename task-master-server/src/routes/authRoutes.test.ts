@@ -222,3 +222,149 @@ describe('auth routes — timezone', () => {
     expect(me.body.data.user.settings.timezone).toBe('UTC');
   });
 });
+
+/**
+ * Settings PATCH integration tests (feature: frontend-profile-settings backend
+ * change). Covers the widened PATCH /api/auth/me partial-settings contract:
+ * boolean/theme keys persist and merge, validation rejects bad values, and the
+ * premium-only weight_visibility_enabled key is stripped for non-premium users.
+ * The timezone-only backward-compat path is covered by the timezone block above.
+ */
+describe('auth routes — settings patch', () => {
+  it('PATCH /api/auth/me persists a partial settings update and preserves other keys', async () => {
+    const email = 'settings-partial@example.com';
+    const reg = await request(app)
+      .post('/api/auth/register')
+      .send({ email, password: 'hunter2pass' });
+    expect(reg.status).toBe(201);
+    const defaults = reg.body.data.user.settings;
+    expect(defaults.theme).toBe('system');
+    expect(defaults.focus_mode_enabled).toBe(false);
+    expect(defaults.achievement_toasts_enabled).toBe(true);
+
+    const token = reg.body.data.accessToken as string;
+    const patch = await request(app)
+      .patch('/api/auth/me')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ theme: 'dark', focus_mode_enabled: true });
+
+    expect(patch.status).toBe(200);
+    const settings = patch.body.data.user.settings;
+    // Changed keys applied.
+    expect(settings.theme).toBe('dark');
+    expect(settings.focus_mode_enabled).toBe(true);
+    // Unspecified keys untouched.
+    expect(settings.achievement_toasts_enabled).toBe(defaults.achievement_toasts_enabled);
+    expect(settings.project_priority_enabled).toBe(defaults.project_priority_enabled);
+    expect(settings.timezone).toBe(defaults.timezone);
+  });
+
+  it('PATCH /api/auth/me rejects an invalid theme with 400 and leaves settings unchanged', async () => {
+    const email = 'settings-bad-theme@example.com';
+    const reg = await request(app)
+      .post('/api/auth/register')
+      .send({ email, password: 'hunter2pass' });
+    const token = reg.body.data.accessToken as string;
+
+    const patch = await request(app)
+      .patch('/api/auth/me')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ theme: 'neon' });
+    expect(patch.status).toBe(400);
+    expect(patch.body.error.code).toBe('VALIDATION_ERROR');
+
+    const me = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${token}`);
+    expect(me.body.data.user.settings.theme).toBe('system');
+  });
+
+  it('PATCH /api/auth/me ignores weight_visibility_enabled for a free-tier user', async () => {
+    const email = 'settings-free-weight@example.com';
+    const reg = await request(app)
+      .post('/api/auth/register')
+      .send({ email, password: 'hunter2pass' });
+    expect(reg.body.data.user.tier).toBe('free');
+    const token = reg.body.data.accessToken as string;
+
+    const patch = await request(app)
+      .patch('/api/auth/me')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ weight_visibility_enabled: true });
+    // Request is well-formed (200) but the premium-only key is stripped server-side.
+    expect(patch.status).toBe(200);
+    expect(patch.body.data.user.settings.weight_visibility_enabled).toBe(false);
+  });
+
+  it('PATCH /api/auth/me applies weight_visibility_enabled for a premium user', async () => {
+    const email = 'settings-premium-weight@example.com';
+    const reg = await request(app)
+      .post('/api/auth/register')
+      .send({ email, password: 'hunter2pass' });
+    const token = reg.body.data.accessToken as string;
+    // Promote to premium directly (no self-serve upgrade path in the API).
+    await pool.query(`UPDATE users SET tier = 'premium' WHERE email = $1`, [email]);
+
+    const patch = await request(app)
+      .patch('/api/auth/me')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ weight_visibility_enabled: true });
+    expect(patch.status).toBe(200);
+    expect(patch.body.data.user.tier).toBe('premium');
+    expect(patch.body.data.user.settings.weight_visibility_enabled).toBe(true);
+  });
+});
+
+/**
+ * Admin tier self-toggle (developer affordance). A user with `is_admin` may
+ * change their own tier via PATCH /api/auth/me; a normal user cannot. This is
+ * the privilege-escalation boundary — the client must never be able to grant
+ * itself premium.
+ */
+describe('auth routes — admin tier toggle', () => {
+  it('ignores a tier change from a non-admin user', async () => {
+    const email = 'tier-nonadmin@example.com';
+    const reg = await request(app)
+      .post('/api/auth/register')
+      .send({ email, password: 'hunter2pass' });
+    expect(reg.body.data.user.tier).toBe('free');
+    expect(reg.body.data.user.isAdmin).toBe(false);
+    const token = reg.body.data.accessToken as string;
+
+    const patch = await request(app)
+      .patch('/api/auth/me')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ tier: 'premium' });
+    // Well-formed request (200) but the tier change is silently ignored.
+    expect(patch.status).toBe(200);
+    expect(patch.body.data.user.tier).toBe('free');
+  });
+
+  it('applies a tier change for an admin user and unlocks premium settings', async () => {
+    const email = 'tier-admin@example.com';
+    const reg = await request(app)
+      .post('/api/auth/register')
+      .send({ email, password: 'hunter2pass' });
+    const token = reg.body.data.accessToken as string;
+    // Grant admin out-of-band (as the operator would).
+    await pool.query(`UPDATE users SET is_admin = true WHERE email = $1`, [email]);
+
+    // Promote to premium and enable weight visibility in one request.
+    const patch = await request(app)
+      .patch('/api/auth/me')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ tier: 'premium', weight_visibility_enabled: true });
+    expect(patch.status).toBe(200);
+    expect(patch.body.data.user.tier).toBe('premium');
+    expect(patch.body.data.user.isAdmin).toBe(true);
+    // The same-request weight-visibility change sees the new premium tier.
+    expect(patch.body.data.user.settings.weight_visibility_enabled).toBe(true);
+
+    // And can toggle back to free.
+    const back = await request(app)
+      .patch('/api/auth/me')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ tier: 'free' });
+    expect(back.body.data.user.tier).toBe('free');
+  });
+});

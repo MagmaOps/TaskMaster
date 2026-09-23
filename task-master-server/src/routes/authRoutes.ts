@@ -64,8 +64,28 @@ router.get('/me', authMiddleware, authController.me);
 router.patch(
   '/me',
   authMiddleware,
-  validate([body('timezone').custom(isValidTimezone).withMessage('Invalid timezone')]),
-  authController.updateTimezone,
+  validate([
+    body('theme').optional().isIn(['system', 'light', 'dark']).withMessage('Invalid theme'),
+    body('focus_mode_enabled').optional().isBoolean().withMessage('Must be a boolean').toBoolean(),
+    body('achievement_toasts_enabled')
+      .optional()
+      .isBoolean()
+      .withMessage('Must be a boolean')
+      .toBoolean(),
+    body('project_priority_enabled')
+      .optional()
+      .isBoolean()
+      .withMessage('Must be a boolean')
+      .toBoolean(),
+    body('weight_visibility_enabled')
+      .optional()
+      .isBoolean()
+      .withMessage('Must be a boolean')
+      .toBoolean(),
+    body('timezone').optional().custom(isValidTimezone).withMessage('Invalid timezone'),
+    body('tier').optional().isIn(['free', 'premium']).withMessage('Invalid tier'),
+  ]),
+  authController.updateSettings,
 );
 
 export default router;

@@ -30,6 +30,7 @@ const mockUser: User = {
     theme: 'system',
     timezone: 'UTC',
   },
+  isAdmin: false,
 };
 
 function Probe() {

@@ -116,14 +116,35 @@ export async function me(req: Request, res: Response, next: NextFunction): Promi
   }
 }
 
-export async function updateTimezone(
+/**
+ * Partial settings update. Collects only the settings keys present on the
+ * request body (each already validated by the route) and merges them into the
+ * user's settings; unspecified keys are untouched. Passing only `{ timezone }`
+ * behaves exactly as the previous timezone-only endpoint.
+ */
+export async function updateSettings(
   req: Request,
   res: Response,
   next: NextFunction,
 ): Promise<void> {
   try {
-    const { timezone } = req.body as { timezone: string };
-    const user = await authService.updateTimezone(req.userId as string, timezone);
+    const body = req.body as Record<string, unknown>;
+    const patch: authService.SettingsPatch = {};
+    if ('theme' in body) patch.theme = body.theme as authService.SettingsPatch['theme'];
+    if ('focus_mode_enabled' in body) patch.focus_mode_enabled = body.focus_mode_enabled as boolean;
+    if ('achievement_toasts_enabled' in body) {
+      patch.achievement_toasts_enabled = body.achievement_toasts_enabled as boolean;
+    }
+    if ('project_priority_enabled' in body) {
+      patch.project_priority_enabled = body.project_priority_enabled as boolean;
+    }
+    if ('weight_visibility_enabled' in body) {
+      patch.weight_visibility_enabled = body.weight_visibility_enabled as boolean;
+    }
+    if ('timezone' in body) patch.timezone = body.timezone;
+    if ('tier' in body) patch.tier = body.tier as 'free' | 'premium';
+
+    const user = await authService.updateSettings(req.userId as string, patch);
     res.status(200).json({ success: true, data: { user } });
   } catch (err) {
     next(err);

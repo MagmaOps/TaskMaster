@@ -1,0 +1,18 @@
+.profile {
+  padding: 1rem;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.profile__heading {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0 0 1rem;
+  color: var(--color-text);
+}
+
+@media (max-width: 360px) {
+  .profile {
+    padding: 0.75rem;
+  }
+}

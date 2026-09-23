@@ -32,6 +32,7 @@ export interface UserRow {
   tier: UserTier;
   currency_balance: string; // bigint comes back as string from pg
   settings: UserSettings;
+  is_admin: boolean;
   created_at: Date;
   updated_at: Date;
 }
@@ -45,6 +46,7 @@ export interface PublicUser {
   tier: UserTier;
   currencyBalance: number;
   settings: UserSettings;
+  isAdmin: boolean;
 }
 
 export function toPublicUser(row: UserRow): PublicUser {
@@ -56,6 +58,7 @@ export function toPublicUser(row: UserRow): PublicUser {
     tier: row.tier,
     currencyBalance: Number(row.currency_balance),
     settings: { ...row.settings, timezone: resolveTimezone(row.settings.timezone) },
+    isAdmin: row.is_admin,
   };
 }
 

@@ -1,8 +1,9 @@
 import { Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
-import Placeholder from './pages/Placeholder';
 import TaskList from './pages/TaskList';
 import ProjectManagement from './pages/ProjectManagement';
+import Profile from './pages/Profile';
+import Settings from './pages/Settings';
 import {
   ProtectedRoute,
   RedirectIfAuthed,
@@ -23,8 +24,8 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<TaskList />} />
         <Route path="/projects" element={<ProjectManagement />} />
-        <Route path="/profile" element={<Placeholder title="Profile" />} />
-        <Route path="/settings" element={<Placeholder title="Settings" />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<CatchAllRedirect />} />
     </Routes>

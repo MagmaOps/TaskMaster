@@ -43,6 +43,15 @@ export async function updateSettings(userId: string, settings: UserSettings): Pr
   return res.rows[0];
 }
 
+/** Updates a user's subscription tier and bumps updated_at. */
+export async function updateTier(userId: string, tier: 'free' | 'premium'): Promise<UserRow> {
+  const res = await query<UserRow>(
+    `UPDATE users SET tier = $2, updated_at = now() WHERE id = $1 RETURNING *`,
+    [userId, tier],
+  );
+  return res.rows[0];
+}
+
 export async function findOAuthAccount(
   provider: 'google',
   providerUserId: string,

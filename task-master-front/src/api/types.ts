@@ -24,6 +24,7 @@ export interface User {
   tier: UserTier;
   currencyBalance: number;
   settings: UserSettings;
+  isAdmin: boolean;
 }
 
 /** Success envelope: `{ success: true, data }`. */
@@ -178,3 +179,64 @@ export interface CreateProjectInput {
 }
 
 export type UpdateProjectInput = Partial<CreateProjectInput>;
+
+// --- Profile: achievements, streaks, economy, analytics (mirror backend) ---
+
+/** One unlocked achievement row (GET /api/achievements). */
+export interface AchievementRow {
+  id: string;
+  type: string;
+  unlocked_at: string;
+  data: Record<string, unknown>;
+}
+
+/** A single streak's counters. `lastCompletedDate` is 'YYYY-MM-DD' | null. */
+export interface StreakState {
+  current: number;
+  longest: number;
+  lastCompletedDate: string | null;
+}
+
+/** A per-repeatable-series streak with its representative label. */
+export interface StreakSeriesEntry extends StreakState {
+  seriesId: string;
+  label: string;
+}
+
+/** GET /api/streaks payload. */
+export interface UserStreaks {
+  daily: StreakState | null;
+  series: StreakSeriesEntry[];
+}
+
+/** GET /api/economy payload. */
+export interface Economy {
+  balance: number;
+  earnRate: number;
+  tier: UserTier;
+}
+
+/** One per-project completion analytics row (GET /api/analytics/projects). */
+export interface ProjectAnalytics {
+  projectId: string;
+  name: string;
+  priorityOrder: number;
+  color: string | null;
+  tasksCompleted: number;
+  weightCompleted: number;
+  lastCompletionDate: string | null; // 'YYYY-MM-DD' in the user's zone, or null
+}
+
+// --- Settings update (PATCH /api/auth/me, partial body) ---
+
+/** Any subset of the user-editable settings keys. */
+export type SettingsPatch = Partial<{
+  theme: ThemePreference;
+  focus_mode_enabled: boolean;
+  achievement_toasts_enabled: boolean;
+  project_priority_enabled: boolean;
+  weight_visibility_enabled: boolean;
+  timezone: string;
+  /** Admin-only developer affordance; the backend ignores it for non-admins. */
+  tier: UserTier;
+}>;
