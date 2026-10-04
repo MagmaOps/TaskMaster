@@ -3,7 +3,7 @@
 # Usage: docker compose up -d
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     container_name: taskmaster-postgres
     restart: unless-stopped
     environment:
@@ -22,7 +22,7 @@ services:
 
   # Separate database instance for the automated test suite.
   postgres-test:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     container_name: taskmaster-postgres-test
     restart: unless-stopped
     environment:
