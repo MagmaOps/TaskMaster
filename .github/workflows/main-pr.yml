@@ -1,0 +1,16 @@
+# .github/workflows/main-pr.yml
+
+name: Main PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+
+jobs:
+  k3s-ci:
+    uses: MagmaOps/k3s-lab-ci/.github/workflows/taskmaster-validate.yaml@main
+    with:
+      ref: ${{ github.event.pull_request.head.sha }}
+    secrets: inherit
