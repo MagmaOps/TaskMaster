@@ -1,4 +1,4 @@
-# TaskMaster Documentation
+# TaskMaster Documentation //
 
 Documentation for the TaskMaster project — a weight-based task management SaaS, self-hosted on a k3s home lab and delivered via ArgoCD.
 
